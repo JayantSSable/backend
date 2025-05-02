@@ -11,7 +11,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*")
+// CORS is configured globally in WebConfig
 public class DepartmentController {
 
     private final DepartmentService departmentService;

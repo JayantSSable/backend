@@ -10,7 +10,7 @@ import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/registration")
-@CrossOrigin(origins = "*")
+// CORS is configured globally in WebConfig
 public class RegistrationController {
 
     private final PatientService patientService;

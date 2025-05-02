@@ -4,8 +4,8 @@ server.port=8080
 # Database Configuration - PostgreSQL
 spring.datasource.url=jdbc:postgresql://localhost:5432/hospital_queue_db
 spring.datasource.driverClassName=org.postgresql.Driver
-spring.datasource.username=${DB_USERNAME:jayantsable}
-spring.datasource.password=${DB_PASSWORD:}
+spring.datasource.username=your_username
+spring.datasource.password=your_password
 spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
 
 # Connection Pool Configuration
@@ -25,5 +25,5 @@ app.frontend.url=http://localhost:3000
 # spring.mvc.cors.allowed-headers=*
 
 # Firebase Configuration
-firebase.credentials.path=${FIREBASE_CREDENTIALS_PATH:firebase-service-account.json}
-firebase.database.url=${FIREBASE_DATABASE_URL:}
+firebase.credentials.path=firebase-service-account.json
+firebase.database.url=your_firebase_database_url

@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/queues")
-@CrossOrigin(origins = "*")
+// CORS is configured globally in WebConfig
 public class QueueController {
 
     private final QueueService queueService;

@@ -1,12 +1,15 @@
 package com.hospital.queue.service;
 
 import com.hospital.queue.dto.PatientDTO;
+// PatientNotificationDto is now handled directly in PatientDeviceService
 import com.hospital.queue.dto.PatientStatusUpdateDTO;
 import com.hospital.queue.exception.ResourceNotFoundException;
 import com.hospital.queue.model.Patient;
 import com.hospital.queue.model.Queue;
 import com.hospital.queue.repository.PatientRepository;
 import com.hospital.queue.repository.QueueRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,16 +20,21 @@ import java.util.stream.Collectors;
 @Service
 public class PatientService {
 
+    private static final Logger logger = LoggerFactory.getLogger(PatientService.class);
+
     private final PatientRepository patientRepository;
     private final QueueRepository queueRepository;
     private final NotificationService notificationService;
+    private final PatientDeviceService patientDeviceService;
     
     public PatientService(PatientRepository patientRepository,
                         QueueRepository queueRepository,
-                        NotificationService notificationService) {
+                        NotificationService notificationService,
+                        PatientDeviceService patientDeviceService) {
         this.patientRepository = patientRepository;
         this.queueRepository = queueRepository;
         this.notificationService = notificationService;
+        this.patientDeviceService = patientDeviceService;
     }
 
     public List<PatientDTO> getAllPatients() {
@@ -196,7 +204,17 @@ public class PatientService {
             patient.setStatus(Patient.PatientStatus.NOTIFIED);
             patient.setNotifiedAt(LocalDateTime.now());
             patientRepository.save(patient);
+            
+            // Send WebSocket notification
             notificationService.sendNotification(patient);
+            
+            // Send Firebase push notification
+            try {
+                patientDeviceService.sendStatusNotification(patient.getId(), patient.getStatus().toString());
+                logger.info("Firebase notification sent to upcoming patient: {}", patient.getId());
+            } catch (Exception e) {
+                logger.error("Error sending Firebase notification to upcoming patient: {}", e.getMessage(), e);
+            }
         }
         
         // Broadcast queue update to all clients
@@ -216,12 +234,20 @@ public class PatientService {
             
             if (!waitingPatients.isEmpty()) {
                 Patient nextPatient = waitingPatients.get(0);
-                System.out.println("Moving next patient " + nextPatient.getId() + " to SERVING status");
+                logger.info("Moving next patient {} to SERVING status", nextPatient.getId());
                 nextPatient.setStatus(Patient.PatientStatus.SERVING);
                 patientRepository.save(nextPatient);
                 
-                // Send notification to the patient being served
+                // Send WebSocket notification to the patient being served
                 notificationService.sendNotification(nextPatient);
+                
+                // Send Firebase push notification
+                try {
+                    patientDeviceService.sendStatusNotification(nextPatient.getId(), nextPatient.getStatus().toString());
+                    logger.info("Firebase notification sent to next patient: {}", nextPatient.getId());
+                } catch (Exception e) {
+                    logger.error("Error sending Firebase notification to next patient: {}", e.getMessage(), e);
+                }
                 
                 // Notify upcoming patients
                 notifyUpcomingPatients(queueId);
@@ -229,7 +255,7 @@ public class PatientService {
                 return convertToDTO(nextPatient);
             }
         } else {
-            System.out.println("Not moving to next patient because there's already a patient being served");
+            logger.info("Not moving to next patient because there's already a patient being served");
         }
         
         return null;
@@ -247,16 +273,24 @@ public class PatientService {
         patient.setQueuePosition(newPosition);
         
         // Log position change
-        System.out.println("Patient queue position changed: " + patient.getName() + 
-                          " from " + oldPosition + " to " + newPosition);
+        logger.info("Patient queue position changed: {} from {} to {}", 
+                   patient.getName(), oldPosition, newPosition);
         
         Patient updatedPatient = patientRepository.save(patient);
         
-        // Broadcast queue update to all clients
+        // Broadcast queue update to all clients via WebSocket
         notificationService.broadcastQueueUpdate(patient.getQueue().getId());
         
-        // Send notification to the patient about position change
+        // Send notification to the patient about position change via WebSocket
         notificationService.sendNotification(patient);
+        
+        // Send push notification via Firebase Cloud Messaging
+        try {
+            patientDeviceService.sendStatusNotification(patient.getId(), patient.getStatus().toString());
+            logger.info("Firebase notification sent for position change to patient: {}", patient.getId());
+        } catch (Exception e) {
+            logger.error("Error sending Firebase notification for position change: {}", e.getMessage(), e);
+        }
         
         return convertToDTO(updatedPatient);
     }
