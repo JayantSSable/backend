@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "departments")
-public class Department {
+@Table(name = "hospitals")
+public class Hospital {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,14 +16,17 @@ public class Department {
     @Column(nullable = false)
     private String name;
     
+    private String address;
+    
+    private String contactNumber;
+    
+    private String email;
+    
+    @Column(length = 1000)
     private String description;
     
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "hospital_id", nullable = false)
-    private Hospital hospital;
-    
-    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Queue> queues = new ArrayList<>();
+    @OneToMany(mappedBy = "hospital", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Department> departments = new ArrayList<>();
     
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -41,7 +44,7 @@ public class Department {
     }
     
     // Constructors
-    public Department() {
+    public Hospital() {
     }
     
     // Getters and Setters
@@ -61,6 +64,30 @@ public class Department {
         this.name = name;
     }
     
+    public String getAddress() {
+        return address;
+    }
+    
+    public void setAddress(String address) {
+        this.address = address;
+    }
+    
+    public String getContactNumber() {
+        return contactNumber;
+    }
+    
+    public void setContactNumber(String contactNumber) {
+        this.contactNumber = contactNumber;
+    }
+    
+    public String getEmail() {
+        return email;
+    }
+    
+    public void setEmail(String email) {
+        this.email = email;
+    }
+    
     public String getDescription() {
         return description;
     }
@@ -69,20 +96,12 @@ public class Department {
         this.description = description;
     }
     
-    public Hospital getHospital() {
-        return hospital;
+    public List<Department> getDepartments() {
+        return departments;
     }
     
-    public void setHospital(Hospital hospital) {
-        this.hospital = hospital;
-    }
-    
-    public List<Queue> getQueues() {
-        return queues;
-    }
-    
-    public void setQueues(List<Queue> queues) {
-        this.queues = queues;
+    public void setDepartments(List<Department> departments) {
+        this.departments = departments;
     }
     
     public LocalDateTime getCreatedAt() {

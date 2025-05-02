@@ -12,13 +12,19 @@ public class DepartmentDTO {
     
     private String description;
     
+    private Long hospitalId;
+    
+    private String hospitalName;
+    
     public DepartmentDTO() {
     }
     
-    public DepartmentDTO(Long id, String name, String description) {
+    public DepartmentDTO(Long id, String name, String description, Long hospitalId, String hospitalName) {
         this.id = id;
         this.name = name;
         this.description = description;
+        this.hospitalId = hospitalId;
+        this.hospitalName = hospitalName;
     }
     
     public Long getId() {
@@ -43,5 +49,21 @@ public class DepartmentDTO {
     
     public void setDescription(String description) {
         this.description = description;
+    }
+    
+    public Long getHospitalId() {
+        return hospitalId;
+    }
+    
+    public void setHospitalId(Long hospitalId) {
+        this.hospitalId = hospitalId;
+    }
+    
+    public String getHospitalName() {
+        return hospitalName;
+    }
+    
+    public void setHospitalName(String hospitalName) {
+        this.hospitalName = hospitalName;
     }
 }
