@@ -13,7 +13,10 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,12 +49,11 @@ public class FirebaseMessagingService {
                 logger.info("No Firebase apps found, initializing new app");
                 
                 try {
-                    ClassPathResource resource = new ClassPathResource(credentialsPath);
-                    logger.info("Loading credentials from: {}, exists: {}", 
-                            resource.getPath(), resource.exists());
+                    // Try to load credentials from different sources
+                    InputStream credentialsStream = getCredentialsInputStream(credentialsPath);
                     
                     GoogleCredentials credentials = GoogleCredentials
-                            .fromStream(resource.getInputStream());
+                            .fromStream(credentialsStream);
                     logger.info("Credentials loaded successfully");
                     
                     FirebaseOptions.Builder builder = FirebaseOptions.builder()
@@ -196,6 +198,45 @@ public class FirebaseMessagingService {
      * @param tokens List of device tokens
      * @return MulticastMessage
      */
+    /**
+     * Get the credentials input stream from various possible sources
+     * 
+     * @param credentialsPath Path to the credentials file
+     * @return InputStream for the credentials
+     * @throws IOException If the credentials file cannot be found or read
+     */
+    private InputStream getCredentialsInputStream(String credentialsPath) throws IOException {
+        logger.info("Attempting to load Firebase credentials from: {}", credentialsPath);
+        
+        // First try as a file system resource (for production environment with /etc/secrets/)
+        File file = new File(credentialsPath);
+        if (file.exists() && file.isFile()) {
+            logger.info("Found Firebase credentials as a file system resource: {}", file.getAbsolutePath());
+            return new FileInputStream(file);
+        }
+        
+        // Then try as a classpath resource (for local development)
+        ClassPathResource classPathResource = new ClassPathResource(credentialsPath);
+        if (classPathResource.exists()) {
+            logger.info("Found Firebase credentials as a classpath resource: {}", classPathResource.getPath());
+            return classPathResource.getInputStream();
+        }
+        
+        // If the path contains a directory separator, try to load just the filename from classpath
+        if (credentialsPath.contains("/")) {
+            String filename = credentialsPath.substring(credentialsPath.lastIndexOf("/") + 1);
+            ClassPathResource filenameResource = new ClassPathResource(filename);
+            if (filenameResource.exists()) {
+                logger.info("Found Firebase credentials using filename only: {}", filename);
+                return filenameResource.getInputStream();
+            }
+        }
+        
+        // If we get here, we couldn't find the credentials file
+        throw new IOException("Firebase credentials file not found at " + credentialsPath + 
+                " or in classpath. Please check the file exists and is accessible.");
+    }
+    
     private MulticastMessage createMulticastMessage(PatientNotificationDto notification, List<String> tokens) {
         return MulticastMessage.builder()
                 .setNotification(createNotification(notification))
