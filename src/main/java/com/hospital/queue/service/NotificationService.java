@@ -17,24 +17,36 @@ public class NotificationService {
     }
 
     public void sendNotification(Patient patient) {
-        NotificationDTO notification = new NotificationDTO();
-        notification.setPatientId(patient.getId());
-        notification.setPatientName(patient.getName());
-        notification.setQueueId(patient.getQueue().getId());
-        notification.setQueueName(patient.getQueue().getName());
-        notification.setDepartmentName(patient.getQueue().getDepartment().getName());
-        notification.setStatus(patient.getStatus());
-        notification.setQueuePosition(patient.getQueuePosition());
-        notification.setTimestamp(LocalDateTime.now());
-        
-        // Send to specific patient channel
-        messagingTemplate.convertAndSend("/topic/patient/" + patient.getId(), notification);
-        
-        // Send to queue channel
-        messagingTemplate.convertAndSend("/topic/queue/" + patient.getQueue().getId(), notification);
+        try {
+            NotificationDTO notification = new NotificationDTO();
+            notification.setPatientId(patient.getId());
+            notification.setPatientName(patient.getName());
+            notification.setQueueId(patient.getQueue().getId());
+            notification.setQueueName(patient.getQueue().getName());
+            notification.setDepartmentName(patient.getQueue().getDepartment().getName());
+            notification.setStatus(patient.getStatus());
+            notification.setQueuePosition(patient.getQueuePosition());
+            notification.setTimestamp(LocalDateTime.now());
+            
+            // Send to specific patient channel
+            messagingTemplate.convertAndSend("/topic/patient/" + patient.getId(), notification);
+            
+            // Send to queue channel
+            messagingTemplate.convertAndSend("/topic/queue/" + patient.getQueue().getId(), notification);
+        } catch (Exception e) {
+            // Log the error but don't let it disrupt the application flow
+            System.err.println("WebSocket notification failed: " + e.getMessage());
+            // The application can continue without WebSocket notifications
+        }
     }
 
     public void broadcastQueueUpdate(Long queueId) {
-        messagingTemplate.convertAndSend("/topic/queue/" + queueId, "queue-updated");
+        try {
+            messagingTemplate.convertAndSend("/topic/queue/" + queueId, "queue-updated");
+        } catch (Exception e) {
+            // Log the error but don't let it disrupt the application flow
+            System.err.println("WebSocket queue broadcast failed: " + e.getMessage());
+            // The application can continue without WebSocket notifications
+        }
     }
 }
