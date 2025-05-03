@@ -49,6 +49,11 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- Flyway for database migrations -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
         <!-- Lombok dependency removed to fix compilation issues -->
         <dependency>
             <groupId>com.google.zxing</groupId>
