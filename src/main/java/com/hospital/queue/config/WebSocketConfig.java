@@ -22,11 +22,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-                .setAllowedOrigins("*") // Allow all origins for now to debug
-                .withSockJS();
-        
         // Log the configured frontend URL for debugging
         System.out.println("WebSocket configured with frontend URL: " + frontendUrl);
+        
+        registry.addEndpoint("/ws")
+                .setAllowedOrigins(frontendUrl)
+                .withSockJS();
     }
 }
