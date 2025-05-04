@@ -175,7 +175,24 @@ public class PatientService {
         // Handle specific status transitions
         if (newStatus == Patient.PatientStatus.NOTIFIED) {
             patient.setNotifiedAt(LocalDateTime.now());
+            
+            // Send WebSocket notification
             notificationService.sendNotification(patient);
+            
+            // Send Firebase push notification to the patient
+            try {
+                boolean notificationSent = patientDeviceService.sendStatusNotification(
+                    patient.getId(), 
+                    patient.getStatus().toString()
+                );
+                if (notificationSent) {
+                    logger.info("Firebase notification sent to notified patient: {}", patient.getId());
+                } else {
+                    logger.warn("Failed to send Firebase notification to patient: {}", patient.getId());
+                }
+            } catch (Exception e) {
+                logger.error("Error sending Firebase notification to patient: {}", e.getMessage(), e);
+            }
         } else if (newStatus == Patient.PatientStatus.SERVING) {
             // If a patient is now being served, notify the next patients in line
             notifyUpcomingPatients(queueId);

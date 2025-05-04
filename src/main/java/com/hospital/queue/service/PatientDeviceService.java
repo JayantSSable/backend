@@ -151,17 +151,41 @@ public class PatientDeviceService {
                     queue.getName()
             );
             
-            // Set explicit title and body for FCM
-            String title = "TEST".equals(status) ? 
-                "Test Notification" : 
-                "Queue Update: " + queue.getName();
-                
-            String body = "TEST".equals(status) ? 
-                "This is a test notification from Hospital Queue System" : 
-                "Your status has been updated to: " + status;
-                
+            // Set explicit title and body for FCM based on status
+            String title;
+            String body;
+            
+            switch (status) {
+                case "NOTIFIED":
+                    title = "It's Almost Your Turn! - " + queue.getName();
+                    body = "Please proceed to the waiting area. You will be called shortly.";
+                    break;
+                case "SERVING":
+                    title = "You're Being Served Now - " + queue.getName();
+                    body = "Please proceed to the service counter immediately.";
+                    break;
+                case "WAITING":
+                    title = "Queue Update - " + queue.getName();
+                    body = "Your current position in queue: " + patient.getQueuePosition();
+                    break;
+                case "SERVED":
+                    title = "Service Completed - " + queue.getName();
+                    body = "Thank you for visiting us today!";
+                    break;
+                case "TEST":
+                    title = "Test Notification";
+                    body = "This is a test notification from Hospital Queue System";
+                    break;
+                default:
+                    title = "Queue Update: " + queue.getName();
+                    body = "Your status has been updated to: " + status;
+            }
+            
             notification.setTitle(title);
             notification.setBody(body);
+            
+            // Note: Additional data like patientId, queueId, status, etc. are automatically
+            // added to the notification by FirebaseMessagingService.createDataPayload()
             
             logger.info("Sending notification with title: '{}', body: '{}'", title, body);
             
